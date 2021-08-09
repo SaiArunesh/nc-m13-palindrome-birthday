@@ -1,6 +1,14 @@
 var dateInput = document.querySelector("#birthday");
 var submitBtn = document.querySelector("#submitBtn");
 var result = document.querySelector("#result");
+const dateFormatMap = {
+    0: "ddmmyyyy",
+    1: "mmddyyyy",
+    2: "yyyymmdd",
+    3: "ddmmyy",
+    4: "mmddyy",
+    5: "yymmdd"
+}
 
 function reverseString(bday) {
     let reverseBday = bday.split('').reverse().join('');
@@ -9,7 +17,7 @@ function reverseString(bday) {
 
 function isPalindrome(bday) {
     let reverseBday = reverseString(bday);
-    return reverseBday == bday;
+    return reverseBday === bday;
 }
 
 function convertDateToStr(date) {
@@ -37,10 +45,10 @@ function checkPalindrome(date) {
     let dateArray = getAllDateFormats(date);
     for (let i = 0; i < dateArray.length; i++) {
         if (isPalindrome(dateArray[i])) {
-            return true;
+            return [true, dateArray[i], i];
         }
     }
-    return false;
+    return [false, "", -1];
 }
 
 function isLeapYear(year) {
@@ -91,15 +99,19 @@ function decrementDate(date) {
 
 function findPreviousPalindromeDate(date) {
     let daysBefore = 0;
+    let isAPalindrome = 0;
+    let dateFormat = "";
+    let index = 0;
 
     while (1) {
-        if (checkPalindrome(date)) {
+        [isAPalindrome, dateFormat, index] = checkPalindrome(date);
+        if (isAPalindrome) {
             break;
         }
         date = decrementDate(date);
         daysBefore++;
     }
-    return [daysBefore, date];
+    return [daysBefore, date, dateFormat, index];
 }
 
 function incrementDate(date) {
@@ -127,19 +139,49 @@ function incrementDate(date) {
 
 function findNextPalindromeDate(date) {
     let daysAfter = 0;
-
+    let isAPalindrome = false;
+    let dateFormat = "";
+    let index = 0;
     while (1) {
-        if (checkPalindrome(date)) {
+        [isAPalindrome, dateFormat, index] = checkPalindrome(date);
+        if (isAPalindrome) {
             break;
         }
         date = incrementDate(date);
         daysAfter++;
     }
-    return [daysAfter, date];
+    return [daysAfter, date, dateFormat, index]; //change this function also
 }
 
+function getFormattedDate(date, index) {
 
-function palindromeMain(e) {
+    let dateFormat = "";
+    console.log(typeof date);
+    switch (index) {
+        //ddmmyyyy, mmddyyyy
+        case 0:
+        case 1:
+            dateFormat = date.substring(0, 2) + "-" + date.substring(2, 4) + "-" + date.substring(4, date.length);
+            break;
+
+        //yyyymmdd
+        case 2:
+            dateFormat = date.substring(0, 4) + "-" + date.substring(4, 6) + "-" + date.substring(6, date.length);
+            break;
+
+        //ddmmyy, mmddyy, yymmdd
+        case 3:
+        case 4:
+        case 5:
+            dateFormat = date.substring(0, 2) + "-" + date.substring(2, 4) + "-" + date.substring(4, date.length);
+            break;
+    }
+
+    return dateFormat;
+
+}
+
+function palindromeMain() {
     result.style.display = 'none';
 
     let date = dateInput.value.split('-');
@@ -150,27 +192,33 @@ function palindromeMain(e) {
             year: Number(date[0])
         }
         result.style.display = 'block';
-        if (checkPalindrome(dateObj)) {
-            result.innerText = "Palindrome";
+
+        let [isAPalindrome, dateFormat, index] = checkPalindrome(dateObj);
+
+        if (isAPalindrome) {
+            let formattedDate = getFormattedDate(dateFormat, index);
+            result.innerText = `Palindrome in format ${formattedDate} - ${dateFormatMap[index]}`;
         }
         else {
-            let [daysAfter, nextDate] = findNextPalindromeDate(dateObj);
+            let [daysAfter, nextDate, nextDateFormat, nextIndex] = findNextPalindromeDate(dateObj);
+            let [daysBefore, prevDate, prevDateFormat, prevIndex] = findPreviousPalindromeDate(dateObj);
+
             nextDate = convertDateToStr(nextDate);
-
-            let [daysBefore, prevDate] = findPreviousPalindromeDate(dateObj);
             prevDate = convertDateToStr(prevDate);
+            let nextDateFormatted = getFormattedDate(nextDateFormat, nextIndex);
+            let prevDateFormatted = getFormattedDate(prevDateFormat, prevIndex);
 
-            result.innerText = `Oops Not a Palindrome Next possible Palindrome day is ${daysAfter} days away on ${nextDate.day}/${nextDate.month}/${nextDate.year} (dd/mm/yyyy)`;
+            result.innerText = `Oops Not a Palindrome\n\n\n Next possible Palindrome day is ${daysAfter} days away on ${nextDate.day}/${nextDate.month}/${nextDate.year} (dd/mm/yyyy) in format ${nextDateFormatted} - (${dateFormatMap[nextIndex]})`;
 
             if (daysBefore < daysAfter) {
-                result.innerText = result.innerText + `\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy) (NEAREST)`;
+                result.innerText = result.innerText + `\n\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy) in format ${prevDateFormatted} - (${dateFormatMap[prevIndex]}) (NEAREST DATE)`;
             }
             else if (daysAfter < daysBefore) {
 
-                result.innerText = result.innerText + ` (NEAREST)\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy)`;
+                result.innerText = result.innerText + `  (NEAREST DATE)\n\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy) in format ${prevDateFormatted} - (${dateFormatMap[prevIndex]})`;
             }
             else {
-                result.innerText = result.innerText + `\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy)\n\n\n BOTH ARE EQUALLY APART!`
+                result.innerText = result.innerText + `\n\n\n or ${daysBefore} days before on ${prevDate.day}/${prevDate.month}/${prevDate.year} (dd/mm/yyyy) in format ${prevDateFormatted} - (${dateFormatMap[prevIndex]})\n\n\n BOTH ARE EQUALLY APART!`
             }
 
         }
