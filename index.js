@@ -183,6 +183,10 @@ function getFormattedDate(date, index) {
 
 function palindromeMain() {
     result.style.display = 'none';
+    result.style.width = "auto";
+    result.style.height = "auto";
+    result.style.backgroundImage = "";
+
 
     let date = dateInput.value.split('-');
     if (date.length !== 1) {
@@ -224,10 +228,29 @@ function palindromeMain() {
         }
     }
     else
-        return
+        return;
+}
+
+function callPalindromeMain() {
+    result.style.display = "block";
+
+    if (dateInput.value === "") {
+        result.innerText = "Input cannot be empty";
+    }
+    else {
+        result.innerText = "";
+
+        result.style.backgroundImage = "url('https://cssauthor.com/wp-content/uploads/2018/06/Silver-Balls-Swinging.gif')";
+        result.style.width = "80px";
+        result.style.height = "60px";
+
+        result.style.backgroundSize = "80px 60px";
+
+        setTimeout(palindromeMain, 2000);
+    }
 }
 
 
 result.style.display = 'none';
 
-submitBtn.addEventListener("click", palindromeMain);
+submitBtn.addEventListener("click", callPalindromeMain);
